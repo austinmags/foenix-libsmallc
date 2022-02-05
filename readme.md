@@ -30,7 +30,7 @@ Some ideas for improvement:
 void *smalloc(unsigned long);
 ```
 
-The implementation will attempt to ressurrect a previously freed chunk of memory before
+The implementation will attempt to resurrect a previously freed chunk of memory before
 allocating more memory out of the heap.
 
 Returns NULL if there is not enough memory to satisify the requested amount.
@@ -84,11 +84,11 @@ int main() {
 }
 ```
 
-```heapTop``` must be at least PAGESIZE larger then ```heapBottom```.
+```heapTop``` must be at least PAGESIZE larger than ```heapBottom```.
 
-## __smalloc_stats - returns statistics about the current state of the heap
+## __smalloc_stats - returns the sizes of utilized memory
 ```c
-unsigned long __smalloc_stats(unsigned short *blocks, unsigned long *freeChunkSz);
+unsigned long __smalloc_used(unsigned short *blocks, unsigned long *inBlocks);
 ```
 
 The return result will be the size of all blocks. This includes unallocated space within
@@ -106,6 +106,14 @@ void *bigdata = smalloc(0x2000);
 // block will have beeen allocated with size 0x2000 + block header size 
 ```
 
-```freeChunkSz``` represents the total size of bytes that have been freed and reusable.
-This is the sum of ```FREED.header.size``` in each ```FREED``` structure in the free
-queue of each ```BLOCK```.
+```inBlocks``` is the total size of used memory within blocks.
+
+## __smalloc_avail - returns the sizes of differnt kinds of memory
+```c
+unsigned long __smalloc_avail(unsigned long *inBlocks, unsigned long *inFree);
+```
+
+Returns the unallocated space as provided by __smalloc_init.
+```*inBlocks``` is the total amount of memory available in existing chunks.
+```*inFree``` is the total amount of memory available from previous allocations.
+
