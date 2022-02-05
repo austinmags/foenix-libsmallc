@@ -86,7 +86,7 @@ int main() {
 
 ```heapTop``` must be at least PAGESIZE larger than ```heapBottom```.
 
-## __smalloc_stats - returns the sizes of utilized memory
+## __smalloc_used - returns the sizes of utilized memory
 ```c
 unsigned long __smalloc_used(unsigned short *blocks, unsigned long *inBlocks);
 ```
@@ -108,7 +108,7 @@ void *bigdata = smalloc(0x2000);
 
 ```inBlocks``` is the total size of used memory within blocks.
 
-## __smalloc_avail - returns the sizes of differnt kinds of memory
+## __smalloc_avail - returns the sizes of different kinds of memory
 ```c
 unsigned long __smalloc_avail(unsigned long *inBlocks, unsigned long *inFree);
 ```
