@@ -32,7 +32,7 @@ void sfree(void*);
 // set the heap memory boundaries and default block allocation size
 // WARNING: this will reallocate initial structures and book-keeping values
 // DON'T CALL THIS OR ONLY CALL THIS ONCE AT THE BEGINNING OF YOUR PROGRAM
-void __smalloc_init(unsigned long top, unsigned long size, unsigned long bottom);
+void __smalloc_init(unsigned long bottom, unsigned long top, unsigned long pageSize);
 
 // returns the total number of bytes used by smalloc internals (including smalloc'd data)
 // *numBlocks = the number of blocks allocated

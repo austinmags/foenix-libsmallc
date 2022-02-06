@@ -39,10 +39,8 @@ struct CHUNK {
 // in what was the program data area.
 struct FREED {
     struct CHUNK header;
-    struct {
-        struct FREED* next;
-        struct FREED* prev;
-    };
+    struct FREED* next;
+    struct FREED* prev;
 };
 
 // struct BLOCK maintains a doubly-linked list of BLOCKs
@@ -98,18 +96,18 @@ void print_heap(void) {
 int main(int argc, const char* argv[]) {
     size_t alloc = (1<<16) * 4; // 64k*4 = 256K
     void *b = malloc(alloc);
-    void *p = b + alloc - 1;
+    void *t = b + alloc - 1;
 
     // use blocks of 1K -- should allow us to pack allocations
     // and get a bunch of overhead due to many blocks
-    __smalloc_init((unsigned long)p, 1 << 10, (unsigned long)b);
+    __smalloc_init((unsigned long)b, (unsigned long)t, 1 << 10);
     
     // fill the heap
     for(int i=0; i < 512; i++) {
         void *m = smalloc(i+13);
         *((char *)m) = 'I';
         *((int *)(m+1)) = i;
-        printf("%p\n", m);
+        printf("Allocated %d bytes: %p\n", i, m);
         debug_out();
     }
 

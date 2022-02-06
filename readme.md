@@ -108,7 +108,7 @@ void *bigdata = smalloc(0x2000);
 
 ```inBlocks``` is the total size of used memory within blocks.
 
-## __smalloc_avail - returns the sizes of different kinds of memory
+## __smalloc_avail - returns the sizes of utilized memory
 ```c
 unsigned long __smalloc_avail(unsigned long *inBlocks, unsigned long *inFree);
 ```

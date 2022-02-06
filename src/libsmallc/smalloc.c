@@ -26,7 +26,7 @@ IN THE SOFTWARE.
   and writings of others. As in almost all things in software,
   we stand on the shoulders of giants.
 
-- Heap starts at specific address, HEAP_TOP, and grows downward.
+- Heap starts at specific address, HEAP_BOTTOM
 - Heap grows in BLOCK units. Each block provides memory and
   maintains a list of freed memory out of itself.
 - Blocks are PAGESIZE units by default, but a block can
@@ -56,11 +56,10 @@ TODO:
 #undef SIZE_T
 #define SIZE_T unsigned long
 
-// The heap starts at HEAP_TOP and grows downward by PAGESIZE, and _never_ past HEAP_BOTTOM
-// N.B.: we grow downward because the idea on a smaller memory foot print, the program
-// will grow upward, so we attempt to avoid a clash by design without system protection.
-static void* HEAP_TOP = (void*)0x07ffff;
+// The heap starts at HEAP_BOTTOM and grows by PAGESIZE,
+// and _never_ past HEAP_TOP
 static void* HEAP_BOTTOM = (void*)0x050000;
+static void* HEAP_TOP = (void*)0x07ffff;
 static SIZE_T PAGESIZE = 8192;
 
 #define ALLOCD 1
@@ -81,14 +80,12 @@ struct CHUNK {
 // size of any CHUNK returned by smalloc.
 struct FREED {
     struct CHUNK header;
-    struct {
-        struct FREED* next;
-        struct FREED* prev;
-    };
+    struct FREED* next;
+    struct FREED* prev;
 };
 
 // struct BLOCK maintains a doubly-linked list of BLOCKs
-// It also maintains a pointer, top, to the next memory space to allocate (upward) in the block.
+// It also maintains a pointer, top, to the next memory space to allocate the next chunk in itself.
 // It maintains a pointer to the head of a doubly-linked list of freed chunks.
 // It maintains some size information to make new allocations and reporting easy.
 struct BLOCK {
@@ -110,14 +107,15 @@ struct FREED* __use_freed_chunk(SIZE_T minSize, SIZE_T maxSize);
 struct BLOCK* __block_with_free_space(SIZE_T size);
 struct BLOCK* __new_block(SIZE_T requestedSize);
 
-// tuning - OPTIONAL - call at the very beginning, IF at all
-void __smalloc_init(SIZE_T top, SIZE_T size, SIZE_T bottom) {
+// tuning / configuration of the heap space in
+// physical memory
+void __smalloc_init(SIZE_T bottom, SIZE_T top, SIZE_T pageSize) {
     // guard to prevent a really unfortunate init call
-    if(bottom > top || top - bottom < size) return;
+    if(bottom > top || top - bottom < pageSize) return;
 
-    HEAP_TOP = (void*)top;
-    PAGESIZE = size;
     HEAP_BOTTOM = (void*)bottom;
+    HEAP_TOP = (void*)top;
+    PAGESIZE = pageSize;
     __first_block = NULL;
     __last_block = NULL;
 }
@@ -152,15 +150,14 @@ void* smalloc(SIZE_T n) {
 
     if(!block) return NULL; // out of memory
 
-    // now allocate out of the block
+    // Allocate a chunk from the block
     struct CHUNK* chunk = block->top;
-    block->top += allocSize; // in the block, we grow upwards
+    block->top += allocSize;
     block->remaining -= allocSize;
     chunk->block = block;
     chunk->size = allocSize;
     chunk->flags = (ALLOCD);
-    void *touse = (void *)chunk + sizeof(struct CHUNK);
-    return touse;
+    return (void *)chunk + sizeof(struct CHUNK);
 }
 
 // Free a given pointer to smalloc'd space
@@ -224,14 +221,11 @@ struct BLOCK* __new_block(SIZE_T requestedSize) {
     SIZE_T size = requestedSize + BLOCK_HEADER_SZ;
     if(size < PAGESIZE) size = PAGESIZE;
 
-    void *start = __last_block == NULL ? HEAP_TOP : __last_block - 1;
-    if(start - size < HEAP_BOTTOM) return NULL; // hit the memory limit
+    void *start = __last_block == NULL ? HEAP_BOTTOM : (void*)__last_block + __last_block->size + 1;
+    if(start + size > HEAP_TOP) return NULL; // hit the memory limit
 
-    // <magic>
-    // if you have sbrk -- this is where it would be
-    // otherwise we "allocate" raw memory space
-    struct BLOCK* block = (struct BLOCK*)(start - size); // grow downward
-    // </magic>
+    // allocate it
+    struct BLOCK* block = (struct BLOCK*)start;
 
     // book-keeping to make insertions and CHUNK allocations easy
     block->free = NULL;
@@ -239,7 +233,7 @@ struct BLOCK* __new_block(SIZE_T requestedSize) {
     block->next = NULL;
     block->size = size;
     block->remaining = block->size - BLOCK_HEADER_SZ;
-    block->top = (void *)block + BLOCK_HEADER_SZ; // upwards inside the block
+    block->top = (void *)block + BLOCK_HEADER_SZ;
     if(__first_block == NULL) {
         __first_block = block;
         __last_block = block;
