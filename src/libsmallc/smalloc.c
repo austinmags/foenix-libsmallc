@@ -136,7 +136,7 @@ void* smalloc(SIZE_T n) {
     // reallocate previously freed memory, if possible
     // we allow reuse of chunks of allocSize, up to allocSize*2
     SIZE_T doubleSize = allocSize << 1;
-    struct FREED* freed = __use_freed_chunk(allocSize, doubleSize > allocSize ? doubleSize : allocSize);
+    struct FREED* freed = __use_freed_chunk(allocSize, doubleSize);
     if(freed) {
         struct CHUNK* chunk = (struct CHUNK *)freed;
         chunk->flags |= ALLOCD;
