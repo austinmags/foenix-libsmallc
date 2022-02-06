@@ -1,6 +1,8 @@
-# smalloc - A simple implementation for retro machines
+# libsmallc - a small version of the standard C library
 
 (This software is licensed under the MIT license. See the source code files for the details.)
+
+# smalloc.h
 
 Memory allocation is an exercise of performing (simple) pointer arithmetic and 
 maintaining a couple kinds of doubly-linked lists. One of the goals of this project
@@ -23,14 +25,12 @@ Some ideas for improvement:
 * Binning -- blocks with maximum sizes to allow for more compactness, especially
   for smaller memory units. This idea largely comes from my understanding of dlmalloc.
 
-# API
-
-## smalloc - allocates memory from the heap
+## smalloc: allocates memory from the heap
 ```c
 void *smalloc(unsigned long);
 ```
 
-The implementation will attempt to resurrect a previously freed chunk of memory before
+Allocates memory from the heap. The implementation will attempt to resurrect a previously freed chunk of memory before
 allocating more memory out of the heap.
 
 Returns NULL if there is not enough memory to satisify the requested amount.
@@ -51,7 +51,7 @@ int main() {
 }
 ```
 
-## sfree - deallocates memory from the heap
+## sfree: deallocates memory from the heap
 ```c
 void sfree(void*);
 ```
@@ -66,13 +66,13 @@ CHUNK header, which exists in front of the pointer, has a flags value.
 The flags value must have the ALLOCD bit set. This at least will avoid problems
 with a buggy use that results in a double-sfree of the same memory.
 
-## __smalloc_init - sets the heap boundaries and minimum block size
+## __smalloc_init: sets the heap boundaries and minimum block size
 
 ```c
 void __smalloc_init(unsigned long heapTop, unsigned long blockSize, unsigned long heapBottom);
 ```
 
-Either this should never be called or only called once at the very beginning of the program.
+ Either this should never be called or only called once at the very beginning of the program.
 
 ### Example
 ```c
@@ -116,4 +116,15 @@ unsigned long __smalloc_avail(unsigned long *inBlocks, unsigned long *inFree);
 Returns the unallocated space as provided by __smalloc_init.
 ```*inBlocks``` is the total amount of memory available in existing chunks.
 ```*inFree``` is the total amount of memory available from previous allocations.
+
+# memcpy: copy bytes
+```c
+void* memcpy(void* dst, void* src, unsigned long count);
+```
+
+# strlen: count characters in a string
+```c
+unsigned long strlen(const char* s);
+```
+
 
